@@ -1,19 +1,163 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
-group = 'org.example'
+group = 'com.cs.musicroom'
 version = '1.0-SNAPSHOT'
+sourceCompatibility = '11'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.9.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    // JSON processing
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // JavaFX for GUI (bonus feature)
+    implementation 'org.openjfx:javafx-controls:17.0.2'
+    implementation 'org.openjfx:javafx-fxml:17.0.2'
+
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
 }
+
+// JavaFX configuration
+javafx {
+    version = '17.0.2'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+// Application configurations
+application {
+    mainClass = 'Server.Server'
+}
+
+// Task to run server
+task runServer(type: JavaExec) {
+    group = 'application'
+    description = 'Run the CS Music Room Server'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Server.Server'
+}
+
+// Task to run client
+task runClient(type: JavaExec) {
+    group = 'application'
+    description = 'Run the CS Music Room Client'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Client.Client'
+    standardInput = System.in
+}
+
+// Task to run GUI client
+task runClientGUI(type: JavaExec) {
+    group = 'application'
+    description = 'Run the CS Music Room GUI Client'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Client.ChatClientFX'
+}
+
+// Task to run serialization examples
+task runSerializationDemo(type: JavaExec) {
+    group = 'application'
+    description = 'Run serialization methods demonstration'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Client.ClientSerializationExample'
+}
+
+// Task to run server serialization demo
+task runServerDemo(type: JavaExec) {
+    group = 'application'
+    description = 'Run server serialization demonstration'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Server.ServerSerializationExample'
+}
+
+// Create resources directories
+task createDirectories {
+    doLast {
+        mkdir 'resources/Server.Files'
+        mkdir 'resources/Client/user1'
+        mkdir 'resources/Client/user2'
+        mkdir 'resources/Client/user3'
+        mkdir 'resources/Client/user4'
+        mkdir 'resources/Client/user5'
+
+        // Create some sample files for testing
+        def serverFile = file('resources/Server.Files/sample-server-file.txt')
+        if (!serverFile.exists()) {
+            serverFile.text = 'This is a sample file from the server for download testing.'
+        }
+
+        def clientFile = file('resources/Client/user1/sample-upload-file.txt')
+        if (!clientFile.exists()) {
+            clientFile.text = 'This is a sample file from user1 for upload testing.'
+        }
+
+        def musicFile = file('resources/Client/user1/test-file.mp3')
+        if (!musicFile.exists()) {
+            // Create a dummy mp3 file for testing
+            musicFile.bytes = "This is a dummy MP3 file for testing purposes.".getBytes()
+        }
+
+        println 'Resource directories and sample files created successfully!'
+    }
+}
+
+// Run createDirectories before compiling
+compileJava.dependsOn createDirectories
 
 test {
     useJUnitPlatform()
+}
+
+// Custom tasks for easy development
+task dev {
+    group = 'development'
+    description = 'Setup development environment'
+    dependsOn 'createDirectories', 'build'
+    doLast {
+        println '''
+=== CS Music Room Development Setup Complete ===
+
+To run the application:
+
+1. Start the server:
+   ./gradlew runServer
+
+2. Start client(s) in separate terminals:
+   ./gradlew runClient
+
+3. Or run the GUI client:
+   ./gradlew runClientGUI
+
+4. Run demonstrations:
+   ./gradlew runSerializationDemo
+   ./gradlew runServerDemo
+
+Default users:
+- user1/1234, user2/1234, user3/1234, user4/1234, user5/1234
+
+Features implemented:
+- Multi-client chat system
+- File upload/download
+- User authentication
+- GUI client (bonus)
+- Three communication methods demo
+
+Files are located in:
+- Server files: resources/Server.Files/
+- Client files: resources/Client/<username>/
+'''
+    }
+}
+
+// Wrapper task for easy distribution
+wrapper {
+    gradleVersion = '7.6'
+    distributionType = Wrapper.DistributionType.ALL
 }
